@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Campus Route Finder – AI Lab Mini Project</title>
+<style>
+  body { font-family: 'Times New Roman', serif; line-height: 1.5; margin: 40px; color: #111; }
+  h1 { text-align: center; font-size: 22pt; margin-bottom: 5px; color: #002b5c; }
+  h2 { font-size: 15pt; border-bottom: 1px solid #333; padding-bottom: 4px; margin-top: 24px; color: #002b5c; }
+  h3 { font-size: 13pt; margin-top: 16px; color: #111; }
+  p, li { font-size: 12pt; text-align: justify; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 10.5pt; }
+  th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+  th { background-color: #eaeff5; font-weight: bold; }
+  pre { background-color: #f6f8fa; border: 1px solid #ccc; padding: 12px; font-family: 'Courier New', monospace; font-size: 9.5pt; white-space: pre-wrap; word-wrap: break-word; }
+  code { font-family: 'Courier New', monospace; background-color: #f0f0f0; padding: 1px 4px; }
+  .header-meta { text-align: center; font-size: 12pt; margin-bottom: 25px; }
+</style>
+</head>
+<body>
+<h1>Campus Route Finder – AI Lab Mini Project</h1>
+<div class="header-meta">
+  <b>Title:</b> TCE Campus Route Finder using A* Search and Uniform Cost Search<br>
+  <b>Subject:</b> Artificial Intelligence Laboratory (Experiment 2: Uninformed &amp; Informed Search Strategies)<br>
+  <b>Institution:</b> Thiagarajar College of Engineering (TCE), Madurai<br>
+  <b>Language:</b> Python 3 (Standard Library Only)
+</div>
+
+<h2>1. Abstract</h2>
+<p>Navigating a large university campus efficiently requires finding the shortest walking path between buildings connected by a network of walkways. This mini-project models the <b>Thiagarajar College of Engineering (TCE)</b> campus as a weighted undirected graph of 10 key landmarks and 16 two-way roads. It implements and compares two fundamental Artificial Intelligence search algorithms: <b>Uniform Cost Search (UCS)</b> (an uninformed search algorithm) and <b>A* Search</b> (an informed, heuristic-guided search algorithm). Using the Euclidean straight-line distance as an admissible and consistent heuristic, the system demonstrates that while both algorithms are complete and optimal—always finding the exact same shortest path—<b>A* Search expands significantly fewer nodes</b> by directing its search toward the goal.</p>
+
+<h2>2. Aim</h2>
+<p>To design and implement a Python program that finds the shortest walking route between two locations on the TCE campus using <b>Uniform Cost Search (UCS)</b> and <b>A* Search</b>, and to compare their optimality and search efficiency (number of nodes expanded).</p>
+
+<h2>3. Objectives</h2>
+<ol>
+  <li>To model real landmarks of the <b>TCE Campus</b> as nodes with 2D Cartesian coordinates <code>(x, y)</code> and walkways as weighted undirected edges.</li>
+  <li>To implement <b>Uniform Cost Search (UCS)</b> using a priority queue ordered by cumulative path cost <i>f(n) = g(n)</i>.</li>
+  <li>To formulate an <b>admissible heuristic</b> <i>h(n)</i> using Euclidean straight-line distance and implement <b>A* Search</b> ordered by <i>f(n) = g(n) + h(n)</i>.</li>
+  <li>To compare the performance of UCS and A* Search across multiple campus routes in terms of total path distance and number of nodes expanded.</li>
+</ol>
+
+<h2>4. Algorithms &amp; Heuristic Function</h2>
+<h3>4.1 Uniform Cost Search (UCS)</h3>
+<p>Uniform Cost Search is an <b>uninformed (blind) search</b> strategy that expands the node with the lowest cumulative path cost from the start node. It uses no domain-specific knowledge about the goal's location.</p>
+<ul>
+  <li><b>Evaluation Function:</b> <i>f(n) = g(n)</i>, where <i>g(n)</i> is the actual road distance travelled from the start node to node <i>n</i>.</li>
+  <li><b>Properties:</b> Complete and Optimal (provided all edge costs are positive).</li>
+</ul>
+
+<h3>4.2 A* Search</h3>
+<p>A* Search is an <b>informed (best-first) search</b> strategy that combines the actual cost to reach a node <i>g(n)</i> with an estimated cost to reach the goal <i>h(n)</i>.</p>
+<ul>
+  <li><b>Evaluation Function:</b> <i>f(n) = g(n) + h(n)</i>, where <i>g(n)</i> is the actual road distance from the start node to node <i>n</i>, and <i>h(n)</i> is the estimated straight-line distance from node <i>n</i> to the goal node.</li>
+  <li><b>Properties:</b> Complete and Optimal when <i>h(n)</i> is <b>admissible</b> (never overestimates the true cost to reach the goal).</li>
+</ul>
+
+<h3>4.3 Heuristic Function &amp; Admissibility</h3>
+<p>For any two campus buildings <i>A(x<sub>1</sub>, y<sub>1</sub>)</i> and <i>B(x<sub>2</sub>, y<sub>2</sub>)</i> (where 1 unit = 100 metres):</p>
+<ul>
+  <li><b>Heuristic <i>h(n)</i> (Euclidean Distance):</b> <code>sqrt((x1 - x2)^2 + (y1 - y2)^2) * 100</code></li>
+  <li><b>Actual Road Cost:</b> Since campus footpaths curve around buildings and lawns, the actual walking road distance between connected locations is modelled as 20% longer than the straight line: <code>round(1.2 * Straight_Line_Distance(A, B))</code>.</li>
+  <li><b>Why <i>h(n)</i> is Admissible:</b> By geometry, a straight line is the shortest possible distance between two points. Since every road is 20% longer than the straight-line distance, <i>h(n)</i> never overestimates the true walking distance.</li>
+</ul>
+
+<h2>5. Step-by-Step Algorithm</h2>
+<ol>
+  <li><b>Graph Initialization:</b> Store the 10 TCE campus locations with their <code>(x, y)</code> coordinates in <code>LOCATIONS</code>. Compute each road weight in <code>ROADS</code> as <code>round(straight_line(a, b) * 1.2)</code>.</li>
+  <li><b>Input Selection:</b> Display the numbered list of 10 TCE campus buildings and read the user's <code>start</code> and <code>goal</code> numbers.</li>
+  <li><b>Priority Queue Search:</b> Initialize min-heap <code>frontier = [(0, 0, start, [start])]</code>, dictionary <code>best_g = {start: 0}</code>, and <code>nodes_expanded = 0</code>.</li>
+  <li><b>Main Loop:</b> While <code>frontier</code> is not empty, pop <code>(f, g, node, path)</code> with minimum <code>f</code>. Skip if <code>g &gt; best_g[node]</code>. Increment <code>nodes_expanded</code>. If <code>node == goal</code>, return <code>(path, g, nodes_expanded)</code>. Otherwise, for each neighbour, if <code>new_g = g + cost</code> improves <code>best_g[neighbour]</code>, compute <code>h</code> (0 for UCS, straight-line for A*) and push <code>(new_g + h, new_g, neighbour, path + [neighbour])</code>.</li>
+  <li><b>Output &amp; Comparison:</b> Display the shortest path, total distance in metres, and nodes expanded for both UCS and A* Search.</li>
+</ol>
+
+<h2>6. TCE Campus Map Topology</h2>
+<table>
+  <tr><th>#</th><th>TCE Building Name</th><th>Coordinates (x, y)</th><th>Connected Neighbours</th></tr>
+  <tr><td>1</td><td><b>TCE Main Gate</b></td><td>(0, 0)</td><td>Main Admin Block, Central Library, Mechanical Department</td></tr>
+  <tr><td>2</td><td><b>Main Admin Block</b></td><td>(2, 1)</td><td>TCE Main Gate, TCE Food Court, Central Library</td></tr>
+  <tr><td>3</td><td><b>Central Library</b></td><td>(4, 0)</td><td>TCE Main Gate, Main Admin Block, CSE Department</td></tr>
+  <tr><td>4</td><td><b>TCE Food Court</b></td><td>(3, 3)</td><td>Main Admin Block, CSE Department, KS Auditorium, Mechanical Department</td></tr>
+  <tr><td>5</td><td><b>CSE Department</b></td><td>(6, 1)</td><td>Central Library, TCE Food Court, ECE Department</td></tr>
+  <tr><td>6</td><td><b>ECE Department</b></td><td>(6, 4)</td><td>CSE Department, KS Auditorium, Men's Hostel</td></tr>
+  <tr><td>7</td><td><b>Mechanical Department</b></td><td>(1, 4)</td><td>TCE Main Gate, TCE Food Court, TCE Open Ground</td></tr>
+  <tr><td>8</td><td><b>KS Auditorium</b></td><td>(4, 5)</td><td>TCE Food Court, ECE Department, TCE Open Ground, Men's Hostel</td></tr>
+  <tr><td>9</td><td><b>TCE Open Ground</b></td><td>(2, 7)</td><td>Mechanical Department, KS Auditorium, Men's Hostel</td></tr>
+  <tr><td>10</td><td><b>Men's Hostel</b></td><td>(7, 7)</td><td>ECE Department, KS Auditorium, TCE Open Ground</td></tr>
+</table>
+
+<h2>7. Full Source Code (campus_route_finder.py)</h2>
+<pre>"""
+AI Lab Mini Project
+Title  : TCE Campus Route Finder using A* Search and Uniform Cost Search
+College: Thiagarajar College of Engineering (TCE), Madurai
+Lang   : Python 3 (no external libraries needed)
+"""
+
+import heapq
+import math
+
+# ---------------------------------------------------------------
+# 1. TCE Campus map: each location has (x, y) coordinates
+#    1 unit = 100 metres
+# ---------------------------------------------------------------
+LOCATIONS = {
+    "TCE Main Gate":          (0, 0),
+    "Main Admin Block":       (2, 1),
+    "Central Library":        (4, 0),
+    "TCE Food Court":         (3, 3),
+    "CSE Department":         (6, 1),
+    "ECE Department":         (6, 4),
+    "Mechanical Department":  (1, 4),
+    "KS Auditorium":          (4, 5),
+    "TCE Open Ground":        (2, 7),
+    "Men's Hostel":           (7, 7),
+}
+
+# Two-way roads between TCE locations
+ROADS = [
+    ("TCE Main Gate", "Main Admin Block"),
+    ("TCE Main Gate", "Central Library"),
+    ("TCE Main Gate", "Mechanical Department"),
+    ("Main Admin Block", "TCE Food Court"),
+    ("Main Admin Block", "Central Library"),
+    ("Central Library", "CSE Department"),
+    ("TCE Food Court", "CSE Department"),
+    ("TCE Food Court", "KS Auditorium"),
+    ("TCE Food Court", "Mechanical Department"),
+    ("CSE Department", "ECE Department"),
+    ("ECE Department", "KS Auditorium"),
+    ("ECE Department", "Men's Hostel"),
+    ("Mechanical Department", "TCE Open Ground"),
+    ("KS Auditorium", "TCE Open Ground"),
+    ("KS Auditorium", "Men's Hostel"),
+    ("TCE Open Ground", "Men's Hostel"),
+]
+
+
+def straight_line(a, b):
+    """Straight-line (Euclidean) distance between two places in metres."""
+    (x1, y1), (x2, y2) = LOCATIONS[a], LOCATIONS[b]
+    return math.hypot(x1 - x2, y1 - y2) * 100
+
+
+def build_graph():
+    """Road length = straight-line distance + 20% (roads are not straight)."""
+    graph = {place: {} for place in LOCATIONS}
+    for a, b in ROADS:
+        cost = round(straight_line(a, b) * 1.2)
+        graph[a][b] = cost
+        graph[b][a] = cost
+    return graph
+
+
+GRAPH = build_graph()
+
+
+# ---------------------------------------------------------------
+# 2. Heuristic for A*: straight-line distance to the goal.
+#    It never overestimates the real road distance -&gt; admissible.
+# ---------------------------------------------------------------
+def heuristic(node, goal):
+    return straight_line(node, goal)
+
+
+# ---------------------------------------------------------------
+# 3. Common search function
+#    UCS : f(n) = g(n)
+#    A*  : f(n) = g(n) + h(n)
+# ---------------------------------------------------------------
+def search(start, goal, use_heuristic):
+    frontier = [(0, 0, start, [start])]      # (f, g, node, path)
+    best_g = {start: 0}
+    nodes_expanded = 0
+
+    while frontier:
+        f, g, node, path = heapq.heappop(frontier)
+
+        if g &gt; best_g.get(node, math.inf):   # skip outdated entries
+            continue
+
+        nodes_expanded += 1
+
+        if node == goal:                     # goal test
+            return path, g, nodes_expanded
+
+        for neighbour, cost in GRAPH[node].items():
+            new_g = g + cost
+            if new_g &lt; best_g.get(neighbour, math.inf):
+                best_g[neighbour] = new_g
+                h = heuristic(neighbour, goal) if use_heuristic else 0
+                heapq.heappush(frontier,
+                               (new_g + h, new_g, neighbour, path + [neighbour]))
+
+    return None, math.inf, nodes_expanded
+
+
+def uniform_cost_search(start, goal):
+    return search(start, goal, use_heuristic=False)
+
+
+def a_star_search(start, goal):
+    return search(start, goal, use_heuristic=True)
+
+
+# ---------------------------------------------------------------
+# 4. User interface
+# ---------------------------------------------------------------
+def choose_place(places, prompt):
+    while True:
+        choice = input(prompt).strip()
+        if choice.isdigit() and 1 &lt;= int(choice) &lt;= len(places):
+            return places[int(choice) - 1]
+        print("  Invalid choice, enter a number from the list.")
+
+
+def show_result(name, path, cost, expanded):
+    print(f"\n[{name}]")
+    if path is None:
+        print("  No route found.")
+        return
+    print("  Path          :", " -&gt; ".join(path))
+    print("  Total distance:", cost, "metres")
+    print("  Nodes expanded:", expanded)
+
+
+def main():
+    places = list(LOCATIONS)
+    print("=" * 60)
+    print("   TCE CAMPUS ROUTE FINDER (A* Search vs Uniform Cost Search)")
+    print("=" * 60)
+    for i, p in enumerate(places, 1):
+        print(f"  {i:2}. {p}")
+
+    while True:
+        start = choose_place(places, "\nEnter START location number: ")
+        goal = choose_place(places, "Enter GOAL location number : ")
+
+        ucs = uniform_cost_search(start, goal)
+        astar = a_star_search(start, goal)
+
+        show_result("Uniform Cost Search", *ucs)
+        show_result("A* Search", *astar)
+
+        print("\nComparison:")
+        print(f"  Both found the same shortest distance: {ucs[1] == astar[1]}")
+        print(f"  A* expanded {ucs[2] - astar[2]} fewer node(s) than UCS")
+
+        again = input("\nFind another route? (y/n): ").strip().lower()
+        if again != "y":
+            print("Thank you!")
+            break
+
+
+if __name__ == "__main__":
+    main()
+</pre>
+
+<h2>8. Sample Output from a Real Run</h2>
+<pre>============================================================
+   TCE CAMPUS ROUTE FINDER (A* Search vs Uniform Cost Search)
+============================================================
+   1. TCE Main Gate
+   2. Main Admin Block
+   3. Central Library
+   4. TCE Food Court
+   5. CSE Department
+   6. ECE Department
+   7. Mechanical Department
+   8. KS Auditorium
+   9. TCE Open Ground
+  10. Men's Hostel
+
+Enter START location number: 1
+Enter GOAL location number : 10
+
+[Uniform Cost Search]
+  Path          : TCE Main Gate -&gt; Main Admin Block -&gt; TCE Food Court -&gt; KS Auditorium -&gt; Men's Hostel
+  Total distance: 1237 metres
+  Nodes expanded: 10
+
+[A* Search]
+  Path          : TCE Main Gate -&gt; Main Admin Block -&gt; TCE Food Court -&gt; KS Auditorium -&gt; Men's Hostel
+  Total distance: 1237 metres
+  Nodes expanded: 6
+
+Comparison:
+  Both found the same shortest distance: True
+  A* expanded 4 fewer node(s) than UCS
+
+Find another route? (y/n): y
+
+Enter START location number: 7
+Enter GOAL location number : 5
+
+[Uniform Cost Search]
+  Path          : Mechanical Department -&gt; TCE Food Court -&gt; CSE Department
+  Total distance: 701 metres
+  Nodes expanded: 7
+
+[A* Search]
+  Path          : Mechanical Department -&gt; TCE Food Court -&gt; CSE Department
+  Total distance: 701 metres
+  Nodes expanded: 3
+
+Comparison:
+  Both found the same shortest distance: True
+  A* expanded 4 fewer node(s) than UCS
+
+Find another route? (y/n): n
+Thank you!</pre>
+
+<h2>9. Result &amp; Comparison Table</h2>
+<table>
+  <tr><th>Test Case</th><th>Start Location</th><th>Goal Location</th><th>Shortest Path Found (Both UCS &amp; A*)</th><th>Distance (m)</th><th>UCS Nodes Expanded</th><th>A* Nodes Expanded</th><th>Fewer Nodes by A*</th></tr>
+  <tr><td>1</td><td>TCE Main Gate</td><td>Men's Hostel</td><td>TCE Main Gate &rarr; Main Admin Block &rarr; TCE Food Court &rarr; KS Auditorium &rarr; Men's Hostel</td><td>1237 m</td><td>10</td><td>6</td><td><b>4 (40% saved)</b></td></tr>
+  <tr><td>2</td><td>TCE Main Gate</td><td>KS Auditorium</td><td>TCE Main Gate &rarr; Main Admin Block &rarr; TCE Food Court &rarr; KS Auditorium</td><td>804 m</td><td>7</td><td>4</td><td><b>3 (43% saved)</b></td></tr>
+  <tr><td>3</td><td>Mechanical Dept</td><td>CSE Department</td><td>Mechanical Department &rarr; TCE Food Court &rarr; CSE Department</td><td>701 m</td><td>7</td><td>3</td><td><b>4 (57% saved)</b></td></tr>
+  <tr><td>4</td><td>Main Admin Block</td><td>ECE Department</td><td>Main Admin Block &rarr; TCE Food Court &rarr; KS Auditorium &rarr; ECE Department</td><td>804 m</td><td>8</td><td>5</td><td><b>3 (38% saved)</b></td></tr>
+  <tr><td>5</td><td>Central Library</td><td>TCE Open Ground</td><td>Central Library &rarr; Main Admin Block &rarr; TCE Food Court &rarr; KS Auditorium &rarr; TCE Open Ground</td><td>1143 m</td><td>10</td><td>8</td><td><b>2 (20% saved)</b></td></tr>
+</table>
+
+<h2>10. Conclusion</h2>
+<p>The <b>TCE Campus Route Finder</b> was successfully implemented in Python 3 using <b>Uniform Cost Search (UCS)</b> and <b>A* Search</b>. Across all test cases on the 10-building TCE campus map, both UCS and A* Search consistently found the exact same shortest walking route and distance in metres, while A* Search expanded up to <b>40%–57% fewer nodes</b> than Uniform Cost Search due to its admissible Euclidean heuristic.</p>
+
+<h2>11. 10 Likely Viva Questions with Short Answers</h2>
+<p><b>Q1. What is the main difference between Uniform Cost Search (UCS) and A* Search?</b><br>
+<b>Ans:</b> UCS is an <i>uninformed</i> search algorithm that orders nodes purely by cumulative path cost <i>f(n) = g(n)</i>, expanding outward in all directions. A* is an <i>informed</i> search algorithm that adds a heuristic estimate <i>f(n) = g(n) + h(n)</i> to guide the search directly toward the goal.</p>
+
+<p><b>Q2. What heuristic function is used in this project, and why is it admissible?</b><br>
+<b>Ans:</b> We use the straight-line (Euclidean) distance between two campus locations as <i>h(n)</i>. It is admissible because a straight line is the shortest possible distance between two points, and our actual roads are 20% longer (cost = 1.2 &times; straight line), so <i>h(n)</i> never overestimates the true walking distance.</p>
+
+<p><b>Q3. What happens if h(n) = 0 for all nodes in A* Search?</b><br>
+<b>Ans:</b> When <i>h(n) = 0</i>, the evaluation function <i>f(n) = g(n) + 0</i> reduces to <i>f(n) = g(n)</i>, which means A* Search behaves identically to Uniform Cost Search (UCS).</p>
+
+<p><b>Q4. What data structure is used to implement the frontier in UCS and A*, and why?</b><br>
+<b>Ans:</b> A <b>min-heap priority queue</b> (<code>heapq</code> in Python) is used. It allows us to always extract the node with the minimum <i>f(n)</i> value in <i>O(log V)</i> time.</p>
+
+<p><b>Q5. Why do we perform the goal test when popping a node from the priority queue rather than when pushing it?</b><br>
+<b>Ans:</b> Because the first time a goal node is generated (pushed), it might be reached via a suboptimal path with a higher cost. Only when the goal node is popped from the min-heap are we guaranteed that no other path in the frontier has a smaller cost <i>f(n)</i>.</p>
+
+<p><b>Q6. What does line <code>if g &gt; best_g.get(node, math.inf): continue</code> do in the code?</b><br>
+<b>Ans:</b> Since Python's <code>heapq</code> does not support a native decrease-key operation, whenever we find a shorter path to a neighbour we push a new entry into the heap. This check lazily ignores older, higher-cost entries for the same node when they are eventually popped.</p>
+
+<p><b>Q7. Under what condition is Uniform Cost Search guaranteed to be optimal?</b><br>
+<b>Ans:</b> UCS is guaranteed to be optimal and complete as long as every edge cost is strictly positive, preventing infinite zero-cost or negative-cost loops.</p>
+
+<p><b>Q8. What happens if the heuristic h(n) overestimates the actual cost (i.e., is not admissible)?</b><br>
+<b>Ans:</b> If <i>h(n)</i> overestimates the true cost to the goal, A* Search loses its <b>optimality</b> guarantee—it may return a suboptimal path because the optimal path's <i>f(n)</i> might look artificially high.</p>
+
+<p><b>Q9. What is a consistent (monotonic) heuristic, and is our Euclidean heuristic consistent?</b><br>
+<b>Ans:</b> A heuristic is consistent if <i>h(n) &le; cost(n, n') + h(n')</i> for every neighbour <i>n'</i>. Yes, our Euclidean straight-line distance satisfies the geometric triangle inequality, and since road costs are 1.2 &times; straight-line distance, it is strictly consistent.</p>
+
+<p><b>Q10. Why did UCS expand all 10 nodes when searching from TCE Main Gate to Men's Hostel, whereas A* expanded only 6?</b><br>
+<b>Ans:</b> Men's Hostel is at the far corner <code>(7, 7)</code> with a shortest path distance of 1237 m, which is the furthest node from TCE Main Gate <code>(0, 0)</code>. UCS expands all nodes whose distance from the start is less than 1237 m (the entire campus). A* adds the remaining distance to Men's Hostel, pruning off-direction buildings like Central Library and CSE Department early.</p>
+</body>
+</html>
